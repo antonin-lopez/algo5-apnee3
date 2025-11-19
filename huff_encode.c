@@ -58,9 +58,24 @@ fap InitHuffman(TableOcc_t *TableOcc)
 
 Arbre ConstruireArbre(fap file)
 {
-	/* A COMPLETER */
-	printf("Programme non realise (ConstruireArbre)\n");
-	return ArbreVide();
+	while (1)
+	{
+		Arbre *ag;
+		int *pg;
+		file = extraire(file, ag, pg);
+
+		if(est_fap_vide(file)){
+			return *ag;
+		}
+		
+		Arbre *ad;
+		int *pd;
+		file = extraire(file, ad, pd);
+		
+		Arbre a = NouveauNoeud(ag, 0 , ad);
+		inserer(file, a, *pg + *pd);
+	}
+	
 }
 
 void ConstruireCode(Arbre huff)
