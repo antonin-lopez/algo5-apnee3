@@ -5,6 +5,7 @@
 #include "huffman_code.h"
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 typedef struct
 {
@@ -52,26 +53,26 @@ fap InitHuffman(TableOcc_t *TableOcc)
 
 Arbre ConstruireArbre(fap file)
 {
-	if (est_fap_vide(file))
-	{
+	printf("Construction de l'arbre d'Huffman\n");
+	if(est_fap_vide(file)){
+		printf("La FAP est vide, on retourne un arbre vide\n");
 		return ArbreVide();
 	}
 
 	while (1)
 	{
-		Arbre ag = ArbreVide();
+		Arbre ag;
 		int pg;
 		file = extraire(file, &ag, &pg);
 
-		if (est_fap_vide(file))
-		{
+		if(est_fap_vide(file)){
 			return ag;
 		}
-
-		Arbre ad = ArbreVide();
+		
+		Arbre ad;
 		int pd;
 		file = extraire(file, &ad, &pd);
-
+		
 		Arbre a = NouveauNoeud(ag, -1, ad);
 		file = inserer(file, a, pg + pd);
 	}
@@ -100,35 +101,48 @@ void ConstruireCodeRec(Arbre a, int code[], int lg)
 
 void ConstruireCode(Arbre huff)
 {
-	for (int i = 0; i < 256; i++)
-		HuffmanCode[i].lg = 0;
+    int buffer[256]; // largement suffisant
+    for (int i = 0; i < 256; i++) {
+        HuffmanCode[i].lg = 0;
+    }
 
-	int code[256];
-	ConstruireCodeRec(huff, code, 0);
+	ConstruireCodeRec(huff, buffer, 0);
+	printf("Programme non realise (ConstruireCode)\n");
 }
 
-void printHuffmanCode(unsigned char c)
-{
-	if (HuffmanCode[c].lg == 0)
-		return;
-	printf("Code pour '%c' : ", c);
-	for (int i = 0; i < HuffmanCode[c].lg; i++)
-	{
-		printf("%d", HuffmanCode[c].code[i]);
-	}
-	printf("\n");
+void printHuffmanCode(unsigned char c) {
+	if(HuffmanCode[c].lg == 0) return;
+    printf("Code pour '%c' : ", c);
+    for (int i = 0; i < HuffmanCode[c].lg; i++) {
+        printf("%d", HuffmanCode[c].code[i]);
+    }
+    printf("\n");
 }
 
 void Encoder(FILE *fic_in, FILE *fic_out, Arbre ArbreHuffman)
 {
-	/* A COMPLETER */
-	printf("Programme non realise (Encoder)\n");
+	int c;
+	BFILE *f = bstart(fic_out, "w");
+	c = fgetc(fic_in);
+	while (c != EOF){
+		unsigned char uc = (unsigned char)c;
+		for(int i = 0; i < HuffmanCode[uc].lg; i++){
+			if(bitwrite(f, HuffmanCode[uc].code[i]) == -1){
+				printf("Erreur lors de l'écriture du bit\n");
+				return;
+			}
+		}
+		c = fgetc(fic_in);
+	}
+	bstop(f);
+	
+	printf("Fichier correctement encodé\n");
 }
 
 int main(int argc, char *argv[])
 {
-
 	TableOcc_t TableOcc;
+
 	FILE *fichier;
 	FILE *fichier_encode;
 
@@ -153,7 +167,7 @@ int main(int argc, char *argv[])
 	{
 		printHuffmanCode((unsigned char)i);
 	}
-
+	
 	/* Encodage */
 	fichier = fopen(argv[1], "r");
 	fichier_encode = fopen(argv[2], "w");
