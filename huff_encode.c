@@ -58,22 +58,30 @@ fap InitHuffman(TableOcc_t *TableOcc)
 
 Arbre ConstruireArbre(fap file)
 {
+	printf("Construction de l'arbre d'Huffman\n");
+	if(est_fap_vide(file)){
+		return ArbreVide();
+	}
+
 	while (1)
 	{
-		Arbre *ag;
-		int *pg;
-		file = extraire(file, ag, pg);
+		Arbre ag = ArbreVide();
+		int pg;
+		file = extraire(file, &ag, &pg);
+
+		printf("Extraction d'un noeud avec priorite %d\n", pg);
 
 		if(est_fap_vide(file)){
-			return *ag;
+			return ag;
 		}
 		
-		Arbre *ad;
-		int *pd;
-		file = extraire(file, ad, pd);
+		Arbre ad = ArbreVide();
+		int pd;
+		file = extraire(file, &ad, &pd);
 		
-		Arbre a = NouveauNoeud(ag, 0 , ad);
-		inserer(file, a, *pg + *pd);
+		Arbre a = NouveauNoeud(ag, pg + pd , ad);
+		printf("Creation d'un nouveau noeud avec priorite %d\n", pg + pd);
+		file = inserer(file, a, pg + pd);
 	}
 	
 }
@@ -107,6 +115,7 @@ int main(int argc, char *argv[])
 
 	/* Construire l'arbre d'Huffman */
 	Arbre ArbreHuffman = ConstruireArbre(file);
+	printf("Arbre d'Huffman construit :\n");
 
 	AfficherArbre(ArbreHuffman);
 
