@@ -83,6 +83,8 @@ void ConstruireCodeRec(Arbre a, int code[], int lg)
 	if (EstVide(a))
 		return;
 
+	// Si les deux enfants sont vides, on a atteind une feuille.
+	// On met à jour le code avec la longueur du code et la valeur de chacun de ses bits.
 	if (EstVide(FilsGauche(a)) && EstVide(FilsDroit(a)))
 	{
 		Element c = Etiq(a);
@@ -92,6 +94,8 @@ void ConstruireCodeRec(Arbre a, int code[], int lg)
 		return;
 	}
 
+	// Sinon on met à jour le buffer pour la profondeur actuelle avec la valeur pour le fils gauche et 1 pour le fils droite et
+	// on appel recursivement ConstruireCodeRec() pour la profondeur suivante.
 	code[lg] = 0;
 	ConstruireCodeRec(FilsGauche(a), code, lg + 1);
 
@@ -107,7 +111,6 @@ void ConstruireCode(Arbre huff)
     }
 
 	ConstruireCodeRec(huff, buffer, 0);
-	printf("Programme non realise (ConstruireCode)\n");
 }
 
 void printHuffmanCode(unsigned char c) {
@@ -122,10 +125,19 @@ void printHuffmanCode(unsigned char c) {
 void Encoder(FILE *fic_in, FILE *fic_out, Arbre ArbreHuffman)
 {
 	int c;
+	EcrireArbre(fic_out, ArbreHuffman);
+
 	BFILE *f = bstart(fic_out, "w");
+
+	// Lecture du premier caractère du fichier
 	c = fgetc(fic_in);
+
+
 	while (c != EOF){
+		// Cast du caractère de Int à Unsigned Char
 		unsigned char uc = (unsigned char)c;
+		printf("Ecriture du caractere %c\n", uc);
+
 		for(int i = 0; i < HuffmanCode[uc].lg; i++){
 			if(bitwrite(f, HuffmanCode[uc].code[i]) == -1){
 				printf("Erreur lors de l'écriture du bit\n");
@@ -136,7 +148,7 @@ void Encoder(FILE *fic_in, FILE *fic_out, Arbre ArbreHuffman)
 	}
 	bstop(f);
 	
-	printf("Fichier correctement encodé\n");
+	printf("Fichier encodé\n");
 }
 
 int main(int argc, char *argv[])
