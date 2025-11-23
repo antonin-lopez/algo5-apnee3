@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "arbrebin.h": "c",
+        "stdlib.h": "c"
+    }
+}

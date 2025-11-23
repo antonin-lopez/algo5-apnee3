@@ -1,4 +1,3 @@
-
 #include "arbrebin.h"
 #include "bfile.h"
 #include "fap.h"
