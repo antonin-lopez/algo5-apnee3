@@ -1,7 +1,6 @@
 *.o
 
-/tests/decoded
-/tests/encoded
+/tests
 
 huff_encode
 huff_decode
