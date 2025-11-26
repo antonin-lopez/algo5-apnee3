@@ -4,10 +4,10 @@ CC=gcc
 all: huff_encode huff_decode
 
 huff_encode : huff_encode.o arbrebin.o fap.o bfile.o
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@ -lm
 
 huff_decode : huff_decode.o arbrebin.o bfile.o
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@ -lm
 
 # Dépendances obtenues avec "gcc -MM *.c"
 arbrebin.o: arbrebin.c arbrebin.h
