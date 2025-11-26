@@ -53,8 +53,10 @@ void CalculerEntropie(TableOcc_t *TableOcc)
 	for (int i = 0; i < 256; i++)
 	{
 		if (TableOcc->tab[i] != 0)
+		{
 			frequence = (double)TableOcc->tab[i] / nb_occ_total;
 			entropie += frequence * log2(frequence);
+		}
 	}
 
 	entropie = -entropie;
