@@ -2,3 +2,7 @@
 
 /tests/decoded
 /tests/encoded
+
+huff_encode
+huff_decode
+test_generator
