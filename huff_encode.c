@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 typedef struct
 {
@@ -12,6 +13,15 @@ typedef struct
 } TableOcc_t;
 
 struct code_char HuffmanCode[256];
+
+void AfficherTableOcc(TableOcc_t *TableOcc)
+{
+	for (int i = 0; i < 256; i++)
+	{
+		if (TableOcc->tab[i] != 0)
+			printf("Occurences du caractere %c (code %d) : %d\n", i, i, TableOcc->tab[i]);
+	}
+}	
 
 void ConstruireTableOcc(FILE *fichier, TableOcc_t *TableOcc)
 {
@@ -27,12 +37,7 @@ void ConstruireTableOcc(FILE *fichier, TableOcc_t *TableOcc)
 		c = fgetc(fichier);
 	};
 
-	for (i = 0; i < 256; i++)
-	{
-		if (TableOcc->tab[i] != 0)
-			printf("Occurences du caractere %c (code %d) : %d\n", i, i,
-				   TableOcc->tab[i]);
-	}
+	//AfficherTableOcc(TableOcc);
 }
 
 fap InitHuffman(TableOcc_t *TableOcc)
@@ -52,9 +57,8 @@ fap InitHuffman(TableOcc_t *TableOcc)
 
 Arbre ConstruireArbre(fap file)
 {
-	printf("Construction de l'arbre d'Huffman\n");
 	if(est_fap_vide(file)){
-		printf("La FAP est vide, on retourne un arbre vide\n");
+		fprintf(stderr, "La FAP est vide, on retourne un arbre vide\n");
 		return ArbreVide();
 	}
 
@@ -131,23 +135,20 @@ void Encoder(FILE *fic_in, FILE *fic_out, Arbre ArbreHuffman)
 	// Lecture du premier caractère du fichier
 	c = fgetc(fic_in);
 
-
 	while (c != EOF){
 		// Cast du caractère de Int à Unsigned Char
 		unsigned char uc = (unsigned char)c;
-		printf("Ecriture du caractere %c\n", uc);
+		//printf("Ecriture du caractere %c\n", uc);
 
 		for(int i = 0; i < HuffmanCode[uc].lg; i++){
 			if(bitwrite(f, HuffmanCode[uc].code[i]) == -1){
-				printf("Erreur lors de l'écriture du bit\n");
+				fprintf(stderr, "Erreur lors de l'écriture du bit\n");
 				return;
 			}
 		}
 		c = fgetc(fic_in);
 	}
 	bstop(f);
-	
-	printf("Fichier encodé\n");
 }
 
 int main(int argc, char *argv[])
@@ -157,34 +158,47 @@ int main(int argc, char *argv[])
 	FILE *fichier;
 	FILE *fichier_encode;
 
+	clock_t debut, fin;
+	double temps_construction_table, temps_construction_arbre, temps_encodage;
+
 	fichier = fopen(argv[1], "r");
 	/* Construire la table d'occurences */
+
+	debut = clock();
 	ConstruireTableOcc(fichier, &TableOcc);
+	fin = clock();
+	temps_construction_table = (double)(fin - debut) / CLOCKS_PER_SEC;
 	fclose(fichier);
 
 	/* Initialiser la FAP */
 	fap file = InitHuffman(&TableOcc);
 
 	/* Construire l'arbre d'Huffman */
+	debut = clock();
 	Arbre ArbreHuffman = ConstruireArbre(file);
-	printf("Arbre d'Huffman construit :\n");
+	fin = clock();
+	temps_construction_arbre = (double)(fin - debut) / CLOCKS_PER_SEC;
 
-	AfficherArbre(ArbreHuffman);
+	//AfficherArbre(ArbreHuffman);
 
 	/* Construire la table de codage */
 	ConstruireCode(ArbreHuffman);
 
-	for (size_t i = 0; i < 256; i++)
-	{
-		printHuffmanCode((unsigned char)i);
-	}
+	// for (size_t i = 0; i < 256; i++)
+	// {
+	// 	printHuffmanCode((unsigned char)i);
+	// }
 	
 	/* Encodage */
 	fichier = fopen(argv[1], "r");
 	fichier_encode = fopen(argv[2], "w");
 
+	debut = clock();
 	Encoder(fichier, fichier_encode, ArbreHuffman);
-
+	fin = clock();
+	temps_encodage = (double)(fin - debut) / CLOCKS_PER_SEC;
+	
+	printf("%f:%f:%f", temps_construction_table, temps_construction_arbre, temps_encodage);	
 	fclose(fichier_encode);
 	fclose(fichier);
 
