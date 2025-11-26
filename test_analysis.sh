@@ -96,11 +96,16 @@ for fichier in "$SOURCE_DIR"*.txt; do
     fi
 
     IFS=':' read -r tmp_table tmp_arbre tmp_encodage <<< "$output_encodage"
-    
-    stats_construction_table[$cle]=$(echo "${stats_construction_table[$cle]:-0} + $tmp_table" | bc)
-    stats_construction_arbre[$cle]=$(echo "${stats_construction_arbre[$cle]:-0} + $tmp_arbre" | bc)
-    stats_encodage[$cle]=$(echo "${stats_encodage[$cle]:-0} + $tmp_encodage" | bc)
-    
+
+    if [[ -z "$tmp_table" || -z "$tmp_arbre" || -z "$tmp_encodage" ]]; then
+        echo "WARNING: sortie encodage invalide : «$output_encodage»"
+        continue
+    else
+        stats_construction_table[$cle]=$(echo "${stats_construction_table[$cle]:-0} + $tmp_table" | bc)
+        stats_construction_arbre[$cle]=$(echo "${stats_construction_arbre[$cle]:-0} + $tmp_arbre" | bc)
+        stats_encodage[$cle]=$(echo "${stats_encodage[$cle]:-0} + $tmp_encodage" | bc)
+    fi  
+
     sommes[$cle]=$(echo "${sommes[$cle]} + $taux" | bc)
     compteurs[$cle]=$((compteurs[$cle] + 1))
 done
@@ -123,7 +128,10 @@ for taille in 100 500 1000 5000 10000 50000; do
             moyenne_arbre=$(echo "scale=4; ${stats_construction_arbre[$cle]} / ${compteurs[$cle]}" | bc)
             moyenne_encodage=$(echo "scale=4; ${stats_encodage[$cle]} / ${compteurs[$cle]}" | bc)
             moyenne=$(echo "scale=2; ${sommes[$cle]} / ${compteurs[$cle]}" | bc)
-            printf " %8d | %9d | %8d | %6.2f%% | %6.2f | %6.2f | %6.2f\n" "$taille $distinct" "${compteurs[$cle]}" "$moyenne" "$moyenne_table" "$moyenne_arbre" "$moyenne_encodage"
+            printf " %8d | %9d | %8d | %6.2f%% | %10.5f | %10.5f | %10.5f\n" \
+            "$taille" "$distinct" "${compteurs[$cle]}" \
+            "$moyenne" "$moyenne_table" "$moyenne_arbre" "$moyenne_encodage"
+
         fi
     done
     echo "-----------------------------------------------------------------------------------"

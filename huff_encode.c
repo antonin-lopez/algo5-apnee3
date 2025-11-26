@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
 	debut = clock();
 	ConstruireTableOcc(fichier, &TableOcc);
 	fin = clock();
-	temps_construction_table = (double)(fin - debut) / CLOCKS_PER_SEC;
+	temps_construction_table = 1000.0 * (double)(fin - debut) / CLOCKS_PER_SEC;
 	fclose(fichier);
 
 	/* Initialiser la FAP */
@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
 	debut = clock();
 	Arbre ArbreHuffman = ConstruireArbre(file);
 	fin = clock();
-	temps_construction_arbre = (double)(fin - debut) / CLOCKS_PER_SEC;
+	temps_construction_arbre = 1000.0 * (double)(fin - debut) / CLOCKS_PER_SEC;
 
 	// AfficherArbre(ArbreHuffman);
 
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
 	debut = clock();
 	Encoder(fichier, fichier_encode, ArbreHuffman);
 	fin = clock();
-	temps_encodage = (double)(fin - debut) / CLOCKS_PER_SEC;
+	temps_encodage = 1000.0 * ((double)(fin - debut) / CLOCKS_PER_SEC);
 
 	printf("%f:%f:%f", temps_construction_table, temps_construction_arbre, temps_encodage);
 	fclose(fichier_encode);
