@@ -2,47 +2,71 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <unistd.h>
 
 int main(int argc, char const *argv[])
 {
-    char nom_fichier[64];
-    int nb_caractere;
-    int nb_distinct;
-    int nb_tests;
-    char base_char = 'a';
-
+    // Nettoyage des dossiers de test
+    printf("Nettoyage des dossiers de test...\n");
+    system("rm -rf ./tests/source ./tests/encoded ./tests/decoded");
+    system("mkdir -p ./tests/source ./tests/encoded ./tests/decoded");
+    printf("✓ Dossiers nettoyés et recréés\n\n");
+    
     srand(time(NULL));
     
-    printf("Entrez le nom du fichier:\n");
-    scanf("%64s", nom_fichier);
+    // Paramètres de test : tailles de fichiers à tester
+    int tailles[] = {100, 500, 1000, 5000, 10000, 50000};
+    int nb_tailles = 6;
     
-    printf("Entrez le nombre de caracteres a generer:\n");
-    scanf("%d", &nb_caractere);
+    // Paramètres de test : nombres de caractères distincts
+    int distincts[] = {2, 5, 10, 20, 50, 100};
+    int nb_distincts = 6;
     
-    printf("Entrez le nombre de caracteres distincts:\n");
-    scanf("%d", &nb_distinct);
-
-    printf("Entrez le nombre de tests distinct à générer avec ces paramètres:\n");
-    scanf("%d", &nb_tests);
+    // Nombre de répétitions pour chaque combinaison
+    int nb_repetitions = 100;
     
-    for (int i = 0; i < nb_tests; i++)
+    printf("Génération de %d fichiers de test...\n", 
+           nb_tailles * nb_distincts * nb_repetitions);
+    
+    for (int t = 0; t < nb_tailles; t++)
     {
-        char chemin[100];
-        char nom_fichier_iteration[70];
-        snprintf(nom_fichier_iteration, sizeof(nom_fichier_iteration), "%s_%d.txt", nom_fichier, i + 1);
-        snprintf(chemin, sizeof(chemin), "./tests/source-files/%s", nom_fichier_iteration);
-
-        FILE *fichier = fopen(chemin, "a");
-    
-        for (int i = 0; i < nb_caractere; i++)
+        for (int d = 0; d < nb_distincts; d++)
         {
-            char random_char = base_char + (rand() % nb_distinct);
-            fputc(random_char, fichier);
+            int taille = tailles[t];
+            int distinct = distincts[d];
+            
+            // On ne peut pas avoir plus de caractères distincts que de caractères totaux
+            if (distinct > taille) continue;
+            
+            for (int rep = 0; rep < nb_repetitions; rep++)
+            {
+                char nom_fichier[128];
+                snprintf(nom_fichier, sizeof(nom_fichier), 
+                         "test_n%d_d%d_r%d.txt", taille, distinct, rep);
+                
+                char chemin[256];
+                snprintf(chemin, sizeof(chemin), "./tests/source/%s", nom_fichier);
+                
+                FILE *fichier = fopen(chemin, "w");
+                if (!fichier) {
+                    fprintf(stderr, "Erreur: impossible de créer %s\n", chemin);
+                    continue;
+                }
+                
+                // Génération avec distribution variée pour plus de réalisme
+                for (int i = 0; i < taille; i++)
+                {
+                    int choix = rand() % distinct;
+                    char c = 'a' + choix;
+                    fputc(c, fichier);
+                }
+                
+                fclose(fichier);
+            }
+            printf("Créé: 100 fichiers pour taille=%d, distincts=%d\n", taille, distinct);
         }
-        
-        fclose(fichier);
-        printf("Fichier généré avec succès : %s\n", nom_fichier_iteration);
     }
     
+    printf("\nGénération terminée!\n");
     return 0;
 }
