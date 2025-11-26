@@ -10,6 +10,9 @@ DECODED_DIR='./tests/decoded/'
 # Tableau associatif pour stocker les sommes et compteurs
 declare -A sommes
 declare -A compteurs
+declare -A stats_construction_table
+declare -A stats_construction_arbre
+declare -A stats_encodage
 
 echo "=== Analyse de compression Huffman ==="
 echo ""
@@ -50,10 +53,14 @@ for fichier in "$SOURCE_DIR"*.txt; do
     if [ $((total_tests % 50)) -eq 0 ]; then
         echo "Progression: $total_tests tests effectués..."
     fi
+
+     # Clé pour le tableau associatif
+    cle="${NB_CHARS}_${NB_DISTINCT}"
     
     # Encodage (silencieux)
-    ./huff_encode "$fichier" "$ENCODED_DIR/${FILE_NAME}_encoded.hf" > /dev/null 2>&1
+    output_encodage=$(./huff_encode "$fichier" "$ENCODED_DIR/${FILE_NAME}_encoded.hf") #> /dev/null 2>&1
     if [ $? -ne 0 ]; then
+        printf "Erreur lors de l'encodage du fichier %s\n" "$fichier"
         continue
     fi
     
@@ -81,14 +88,18 @@ for fichier in "$SOURCE_DIR"*.txt; do
     # Calcul du taux de compression
     taux=$(echo "scale=4; $taille_encodee * 100 / $taille_source" | bc)
     
-    # Clé pour le tableau associatif
-    cle="${NB_CHARS}_${NB_DISTINCT}"
     
     # Accumuler les sommes
     if [ -z "${sommes[$cle]}" ]; then
         sommes[$cle]="0"
         compteurs[$cle]="0"
     fi
+
+    IFS=':' read -r tmp_table tmp_arbre tmp_encodage <<< "$output_encodage"
+    
+    stats_construction_table[$cle]=$(echo "${stats_construction_table[$cle]:-0} + $tmp_table" | bc)
+    stats_construction_arbre[$cle]=$(echo "${stats_construction_arbre[$cle]:-0} + $tmp_arbre" | bc)
+    stats_encodage[$cle]=$(echo "${stats_encodage[$cle]:-0} + $tmp_encodage" | bc)
     
     sommes[$cle]=$(echo "${sommes[$cle]} + $taux" | bc)
     compteurs[$cle]=$((compteurs[$cle] + 1))
@@ -98,18 +109,21 @@ echo ""
 echo "=== Tests terminés ==="
 echo "Total: $total_tests tests effectués, $tests_reussis réussis"
 echo ""
-echo "==================================================================================="
-echo "  Taille  | Distincts | Nb tests | Taux compression moyen"
-echo "==================================================================================="
+echo "========================================================================================================"
+echo "  Taille  | Distincts | Nb tests | Taux compression moyen | Temps Table | Temps Arbre | Temps Encodage"
+echo "========================================================================================================"
 
 # Trier et afficher les résultats
 for taille in 100 500 1000 5000 10000 50000; do
     for distinct in 2 5 10 20 50 100; do
         cle="${taille}_${distinct}"
-        
+
         if [ -n "${compteurs[$cle]}" ] && [ "${compteurs[$cle]}" -gt 0 ]; then
+            moyenne_table=$(echo "scale=4; ${stats_construction_table[$cle]} / ${compteurs[$cle]}" | bc)
+            moyenne_arbre=$(echo "scale=4; ${stats_construction_arbre[$cle]} / ${compteurs[$cle]}" | bc)
+            moyenne_encodage=$(echo "scale=4; ${stats_encodage[$cle]} / ${compteurs[$cle]}" | bc)
             moyenne=$(echo "scale=2; ${sommes[$cle]} / ${compteurs[$cle]}" | bc)
-            printf " %8d | %9d | %8d | %6.2f%%\n" $taille $distinct ${compteurs[$cle]} $moyenne
+            printf " %8d | %9d | %8d | %6.2f%% | %6.2f | %6.2f | %6.2f\n" "$taille $distinct" "${compteurs[$cle]}" "$moyenne" "$moyenne_table" "$moyenne_arbre" "$moyenne_encodage"
         fi
     done
     echo "-----------------------------------------------------------------------------------"
