@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 
 typedef struct
 {
@@ -21,7 +22,7 @@ void AfficherTableOcc(TableOcc_t *TableOcc)
 		if (TableOcc->tab[i] != 0)
 			printf("Occurences du caractere %c (code %d) : %d\n", i, i, TableOcc->tab[i]);
 	}
-}	
+}
 
 void ConstruireTableOcc(FILE *fichier, TableOcc_t *TableOcc)
 {
@@ -37,7 +38,27 @@ void ConstruireTableOcc(FILE *fichier, TableOcc_t *TableOcc)
 		c = fgetc(fichier);
 	};
 
-	//AfficherTableOcc(TableOcc);
+	// AfficherTableOcc(TableOcc);
+}
+
+void CalculerEntropie(TableOcc_t *TableOcc)
+{
+	double entropie = 0.0;
+	int nb_occ_total = 0;
+
+	for (int i = 0; i < 256; i++)
+		nb_occ_total += TableOcc->tab[i];
+	
+	double frequence;
+	for (int i = 0; i < 256; i++)
+	{
+		if (TableOcc->tab[i] != 0)
+			frequence = (double)TableOcc->tab[i] / nb_occ_total;
+			entropie += frequence * log2(frequence);
+	}
+
+	entropie = -entropie;
+	printf("%f", entropie);
 }
 
 fap InitHuffman(TableOcc_t *TableOcc)
@@ -57,7 +78,8 @@ fap InitHuffman(TableOcc_t *TableOcc)
 
 Arbre ConstruireArbre(fap file)
 {
-	if(est_fap_vide(file)){
+	if (est_fap_vide(file))
+	{
 		fprintf(stderr, "La FAP est vide, on retourne un arbre vide\n");
 		return ArbreVide();
 	}
@@ -68,14 +90,15 @@ Arbre ConstruireArbre(fap file)
 		int pg;
 		file = extraire(file, &ag, &pg);
 
-		if(est_fap_vide(file)){
+		if (est_fap_vide(file))
+		{
 			return ag;
 		}
-		
+
 		Arbre ad;
 		int pd;
 		file = extraire(file, &ad, &pd);
-		
+
 		Arbre a = NouveauNoeud(ag, -1, ad);
 		file = inserer(file, a, pg + pd);
 	}
@@ -108,21 +131,25 @@ void ConstruireCodeRec(Arbre a, int code[], int lg)
 
 void ConstruireCode(Arbre huff)
 {
-    int buffer[256]; // largement suffisant
-    for (int i = 0; i < 256; i++) {
-        HuffmanCode[i].lg = 0;
-    }
+	int buffer[256]; // largement suffisant
+	for (int i = 0; i < 256; i++)
+	{
+		HuffmanCode[i].lg = 0;
+	}
 
 	ConstruireCodeRec(huff, buffer, 0);
 }
 
-void printHuffmanCode(unsigned char c) {
-	if(HuffmanCode[c].lg == 0) return;
-    printf("Code pour '%c' : ", c);
-    for (int i = 0; i < HuffmanCode[c].lg; i++) {
-        printf("%d", HuffmanCode[c].code[i]);
-    }
-    printf("\n");
+void printHuffmanCode(unsigned char c)
+{
+	if (HuffmanCode[c].lg == 0)
+		return;
+	printf("Code pour '%c' : ", c);
+	for (int i = 0; i < HuffmanCode[c].lg; i++)
+	{
+		printf("%d", HuffmanCode[c].code[i]);
+	}
+	printf("\n");
 }
 
 void Encoder(FILE *fic_in, FILE *fic_out, Arbre ArbreHuffman)
@@ -135,13 +162,16 @@ void Encoder(FILE *fic_in, FILE *fic_out, Arbre ArbreHuffman)
 	// Lecture du premier caractère du fichier
 	c = fgetc(fic_in);
 
-	while (c != EOF){
+	while (c != EOF)
+	{
 		// Cast du caractère de Int à Unsigned Char
 		unsigned char uc = (unsigned char)c;
-		//printf("Ecriture du caractere %c\n", uc);
+		// printf("Ecriture du caractere %c\n", uc);
 
-		for(int i = 0; i < HuffmanCode[uc].lg; i++){
-			if(bitwrite(f, HuffmanCode[uc].code[i]) == -1){
+		for (int i = 0; i < HuffmanCode[uc].lg; i++)
+		{
+			if (bitwrite(f, HuffmanCode[uc].code[i]) == -1)
+			{
 				fprintf(stderr, "Erreur lors de l'écriture du bit\n");
 				return;
 			}
@@ -179,7 +209,7 @@ int main(int argc, char *argv[])
 	fin = clock();
 	temps_construction_arbre = (double)(fin - debut) / CLOCKS_PER_SEC;
 
-	//AfficherArbre(ArbreHuffman);
+	// AfficherArbre(ArbreHuffman);
 
 	/* Construire la table de codage */
 	ConstruireCode(ArbreHuffman);
@@ -188,7 +218,7 @@ int main(int argc, char *argv[])
 	// {
 	// 	printHuffmanCode((unsigned char)i);
 	// }
-	
+
 	/* Encodage */
 	fichier = fopen(argv[1], "r");
 	fichier_encode = fopen(argv[2], "w");
@@ -197,8 +227,8 @@ int main(int argc, char *argv[])
 	Encoder(fichier, fichier_encode, ArbreHuffman);
 	fin = clock();
 	temps_encodage = (double)(fin - debut) / CLOCKS_PER_SEC;
-	
-	printf("%f:%f:%f", temps_construction_table, temps_construction_arbre, temps_encodage);	
+
+	printf("%f:%f:%f", temps_construction_table, temps_construction_arbre, temps_encodage);
 	fclose(fichier_encode);
 	fclose(fichier);
 
